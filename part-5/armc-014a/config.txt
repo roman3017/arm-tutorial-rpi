@@ -1,0 +1,4 @@
+kernel=entry1.img
+kernel_address=0x5000
+ramfsfile=entry0.img
+ramfsaddr=0x10000
