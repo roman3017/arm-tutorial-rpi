@@ -28,22 +28,29 @@ void uart_init ( void )
 
 void printstr(char *s)
 {
-	int i = 0;
-	while(s[i])
-	{
-		if(s[i] == '\n')
-			uart_send('\r');
-		uart_send(s[i]);
-		i++;
-	}
+	while(*s)
+		uart_send(*s++);
+        uart_flush();
 }
 
-void printint(int xx, int base, int sign)
+static int divr(unsigned num, unsigned den, unsigned *rem)
+{
+        int ret;
+        ret = 0;
+        while (num >= den)
+        {
+                num -= den;
+                ret++;
+        }
+        *rem = num;
+        return ret;
+}
+
+void printint(int xx, unsigned base, int sign)
 {
 	static char digits[] = "0123456789abcdef";
 	char buf[16];
-	int i;
-	unsigned int x;
+	unsigned i, x, r;
 
 	if(sign && (sign = xx < 0))
 		x = -xx;
@@ -52,14 +59,17 @@ void printint(int xx, int base, int sign)
 
 	i = 0;
 	do {
-		buf[i++] = digits[x % base];
-	} while((x /= base) != 0);
+                x = divr(x, base, &r);
+		buf[i++] = digits[r];
+	} while(x != 0);
 
 	if(sign)
 		buf[i++] = '-';
 
-	while(--i >= 0)
+	while(i-- > 0)
 		uart_send(buf[i]);
+
+        uart_flush();
 }
 
 void cprintf(char *fmt, ...)
@@ -73,8 +83,6 @@ void cprintf(char *fmt, ...)
 	{
 		if(c != '%')
 		{
-			if(c == '\n')
-				uart_send('\r');
 			uart_send(c);
 			continue;
 		}
@@ -94,8 +102,7 @@ void cprintf(char *fmt, ...)
 			case 's':
 				if((s = (char*)*argp++) == 0)
 					s = "(null)";
-				for(; *s; s++)
-					uart_send(*s);
+				printstr(s);
 				break;
 			case '%':
 				uart_send('%');

@@ -2,6 +2,6 @@
 
 int bootmain(int arg)
 {
-        cprintf("bootmain %x\n\n", arg);
+        cprintf("bootmain %s%x\n\n", "0x", arg);
         return arg;
 }
